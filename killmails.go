@@ -25,6 +25,7 @@ func main() {
 	page := 1
 	for {
 		var zkillsPage []ZkillMailEntry
+		fmt.Println(fmt.Sprintf("https://zkillboard.com/api/corporationID/98732555/year/%d/month/%d/page/%d/", targetYear, targetMonth, page))
 		resp, err := http.Get(fmt.Sprintf("https://zkillboard.com/api/corporationID/98732555/year/%d/month/%d/page/%d/", targetYear, targetMonth, page))
 		if err != nil {
 			panic(err)
@@ -73,22 +74,24 @@ func main() {
 		for index, charValue := range killmail.Attackers {
 			if charValue.CharacterId == 0 {
 				killmailOutputs[index] = KillMailOutput{
-					VictimId:         killmail.Victim.CharacterId,
-					VictimName:       victim.Name,
-					VictimShipId:     killmail.Victim.ShipTypeId,
-					VictimShipName:   victimShip.Name,
-					AttackerId:       charValue.CharacterId,
-					AttackerName:     "npc",
-					AttackerShipId:   charValue.ShipTypeId,
-					AttackerShipName: "npc",
-					TotalDamage:      charValue.DamageDone,
-					FinalBlow:        charValue.FinalBlow,
-					NumAttackers:     len(killmail.Attackers),
-					SolarSystemId:    killmail.SolarSystemId,
-					SolarSystemName:  solarSystem.Name,
-					SecurityLevel:    solarSystem.SecurityStatus,
-					KillMailTime:     killmail.KillmailTime,
-					TotalValue:       value.ZKB.TotalValue,
+					VictimId:            killmail.Victim.CharacterId,
+					VictimName:          victim.Name,
+					VictimShipId:        killmail.Victim.ShipTypeId,
+					VictimShipName:      victimShip.Name,
+					AttackerId:          charValue.CharacterId,
+					AttackerName:        "npc",
+					AttackerShipId:      charValue.ShipTypeId,
+					AttackerShipName:    "npc",
+					AttackerCorporateId: 0,
+					AttackerAllianceId:  0,
+					TotalDamage:         charValue.DamageDone,
+					FinalBlow:           charValue.FinalBlow,
+					NumAttackers:        len(killmail.Attackers),
+					SolarSystemId:       killmail.SolarSystemId,
+					SolarSystemName:     solarSystem.Name,
+					SecurityLevel:       solarSystem.SecurityStatus,
+					KillMailTime:        killmail.KillmailTime,
+					TotalValue:          value.ZKB.TotalValue,
 				}
 				continue
 			}
@@ -98,27 +101,29 @@ func main() {
 			} else if err != nil && err.Error() == "404 Not Found" {
 				continue
 			}
-			if character.CorporationId != 98732555 {
+			if character.AllianceId != 99002217 {
 				continue
 			}
 			attackerShip, _, err := esiClient.ESI.UniverseApi.GetUniverseTypesTypeId(ctx, charValue.ShipTypeId, nil)
 			killmailOutputs[index] = KillMailOutput{
-				VictimId:         killmail.Victim.CharacterId,
-				VictimName:       victim.Name,
-				VictimShipId:     killmail.Victim.ShipTypeId,
-				VictimShipName:   victimShip.Name,
-				AttackerId:       charValue.CharacterId,
-				AttackerName:     character.Name,
-				AttackerShipId:   charValue.ShipTypeId,
-				AttackerShipName: attackerShip.Name,
-				TotalDamage:      charValue.DamageDone,
-				FinalBlow:        charValue.FinalBlow,
-				NumAttackers:     len(killmail.Attackers),
-				SolarSystemId:    killmail.SolarSystemId,
-				SolarSystemName:  solarSystem.Name,
-				SecurityLevel:    solarSystem.SecurityStatus,
-				KillMailTime:     killmail.KillmailTime,
-				TotalValue:       value.ZKB.TotalValue,
+				VictimId:            killmail.Victim.CharacterId,
+				VictimName:          victim.Name,
+				VictimShipId:        killmail.Victim.ShipTypeId,
+				VictimShipName:      victimShip.Name,
+				AttackerId:          charValue.CharacterId,
+				AttackerName:        character.Name,
+				AttackerShipId:      charValue.ShipTypeId,
+				AttackerShipName:    attackerShip.Name,
+				AttackerCorporateId: character.CorporationId,
+				AttackerAllianceId:  character.AllianceId,
+				TotalDamage:         charValue.DamageDone,
+				FinalBlow:           charValue.FinalBlow,
+				NumAttackers:        len(killmail.Attackers),
+				SolarSystemId:       killmail.SolarSystemId,
+				SolarSystemName:     solarSystem.Name,
+				SecurityLevel:       solarSystem.SecurityStatus,
+				KillMailTime:        killmail.KillmailTime,
+				TotalValue:          value.ZKB.TotalValue,
 			}
 		}
 		killmailsOutputs = append(killmailsOutputs, killmailOutputs)
@@ -144,7 +149,7 @@ func WriteToFile(killmailsOutputs [][]KillMailOutput) {
 			if killmail.AttackerId == 0 && killmail.AttackerName != "npc" {
 				continue
 			}
-			line := fmt.Sprintf("%d,%s,%d,%s,%d,%s,%d,%s,%d,%t,%d,%d,%s,%f,%v,%f", killmail.VictimId, killmail.VictimName, killmail.VictimShipId, killmail.VictimShipName, killmail.AttackerId, killmail.AttackerName, killmail.AttackerShipId, killmail.AttackerShipName, killmail.TotalDamage, killmail.FinalBlow, killmail.NumAttackers, killmail.SolarSystemId, killmail.SolarSystemName, killmail.SecurityLevel, killmail.KillMailTime, killmail.TotalValue)
+			line := fmt.Sprintf("%d,%s,%d,%s,%d,%s,%d,%s,%d,%d,%d,%t,%d,%d,%s,%f,%v,%f", killmail.VictimId, killmail.VictimName, killmail.VictimShipId, killmail.VictimShipName, killmail.AttackerId, killmail.AttackerName, killmail.AttackerShipId, killmail.AttackerShipName, killmail.AttackerCorporateId, killmail.AttackerAllianceId, killmail.TotalDamage, killmail.FinalBlow, killmail.NumAttackers, killmail.SolarSystemId, killmail.SolarSystemName, killmail.SecurityLevel, killmail.KillMailTime, killmail.TotalValue)
 			if _, err := f.WriteString(line + "\n"); err != nil {
 				panic(err)
 			}
@@ -160,27 +165,29 @@ type KillMailEntry struct {
 
 // if _, err := f.WriteString("victimId,victimName,victimShipId,victimShipName,attackerId,attackerName,attackerShipId,attackerShipName,totalDamage,finalBlow,numAttackers,solarSystemId,solarSystemName,killmailTime\n"); err != nil {
 type KillMailOutput struct {
-	VictimId         int32
-	VictimName       string
-	VictimShipId     int32
-	VictimShipName   string
-	AttackerId       int32
-	AttackerName     string
-	AttackerShipId   int32
-	AttackerShipName string
-	TotalDamage      int32
-	FinalBlow        bool
-	NumAttackers     int
-	SolarSystemId    int32
-	SolarSystemName  string
-	SecurityLevel    float32
-	KillMailTime     time.Time
-	TotalValue       float32
+	VictimId            int32
+	VictimName          string
+	VictimShipId        int32
+	VictimShipName      string
+	AttackerId          int32
+	AttackerName        string
+	AttackerShipId      int32
+	AttackerShipName    string
+	AttackerCorporateId int32
+	AttackerAllianceId  int32
+	TotalDamage         int32
+	FinalBlow           bool
+	NumAttackers        int
+	SolarSystemId       int32
+	SolarSystemName     string
+	SecurityLevel       float32
+	KillMailTime        time.Time
+	TotalValue          float64
 }
 
 type ZKB struct {
 	KillmailHash string  `json:"hash"`
-	TotalValue   float32 `json:"totalValue"`
+	TotalValue   float64 `json:"totalValue"`
 }
 
 type ZkillMailEntry struct {
