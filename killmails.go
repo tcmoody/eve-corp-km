@@ -25,7 +25,6 @@ func main() {
 	page := 1
 	for {
 		var zkillsPage []ZkillMailEntry
-		fmt.Println(fmt.Sprintf("https://zkillboard.com/api/corporationID/98732555/year/%d/month/%d/page/%d/", targetYear, targetMonth, page))
 		resp, err := http.Get(fmt.Sprintf("https://zkillboard.com/api/corporationID/98732555/year/%d/month/%d/page/%d/", targetYear, targetMonth, page))
 		if err != nil {
 			panic(err)
@@ -50,7 +49,6 @@ func main() {
 
 	fmt.Println("Beginning processing of killmails")
 	for _, value := range zkills {
-		fmt.Println(value)
 		//killmail, _, err := esiClient.ESI.KillmailsApi.GetKillmailsKillmailIdKillmailHash(ctx, value.KillmailHash, value.KillmailId, nil)
 		killmail, _, err := esiClient.ESI.KillmailsApi.GetKillmailsKillmailIdKillmailHash(ctx, value.ZKB.KillmailHash, value.KillmailId, nil)
 		if err != nil {
